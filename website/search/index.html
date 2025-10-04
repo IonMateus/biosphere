@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -10,10 +10,50 @@
 <body>
   <div class="app">
     <header class="app-header">
-      <div class="brand">Biosphere</div>
-      <div class="controls">
-        <label class="small">Zoom: <output id="zoom-output">1.00</output></label>
+      <div class="header-top">
+        <div class="brand">Biosphere</div>
+        <div class="status">
+          <label class="small">Zoom: <output id="zoom-output">1.00</output></label>
+          <span class="small" id="result-count" aria-live="polite">Loading…</span>
+        </div>
       </div>
+      <form class="filter-bar" id="filter-form" autocomplete="off">
+        <div class="filter-field filter-field--search">
+          <label for="filter-search">Search</label>
+          <input type="search" id="filter-search" name="search" placeholder="Search by title, abstract, or terms" spellcheck="false" />
+        </div>
+        <div class="filter-field filter-field--journal">
+          <label for="filter-journal">Journal</label>
+          <select id="filter-journal" name="journal">
+            <option value="">All journals</option>
+          </select>
+        </div>
+        <div class="filter-field filter-field--affiliation">
+          <label for="filter-affiliation">Affiliation</label>
+          <select id="filter-affiliation" name="affiliation">
+            <option value="">All affiliations</option>
+          </select>
+        </div>
+        <div class="filter-field filter-field--author">
+          <label for="filter-author-input">Authors</label>
+          <div class="chip-input">
+            <input type="search" id="filter-author-input" name="author" list="author-suggestions" placeholder="Type a name and press Enter" spellcheck="false" />
+            <datalist id="author-suggestions"></datalist>
+          </div>
+          <div class="chip-list" id="selected-authors" aria-live="polite"></div>
+        </div>
+        <div class="filter-field filter-field--range">
+          <label for="filter-year-from">Year</label>
+          <div class="range-inputs">
+            <input type="number" id="filter-year-from" name="yearFrom" placeholder="From" min="1800" max="2100" />
+            <span aria-hidden="true">—</span>
+            <input type="number" id="filter-year-to" name="yearTo" placeholder="To" min="1800" max="2100" />
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button type="button" id="filters-clear" class="ghost">Clear</button>
+        </div>
+      </form>
     </header>
 
     <main class="viewport">
@@ -22,6 +62,42 @@
     </main>
 
     <footer class="app-footer">Use mouse drag to pan, mouse wheel to zoom. Showing cards from dataset.</footer>
+  </div>
+
+  <div id="article-modal" class="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+      <button class="modal__close" type="button" aria-label="Close details" data-modal-close>&times;</button>
+      <header class="modal__header">
+        <h2 id="modal-title" class="modal__title"></h2>
+        <p id="modal-meta" class="modal__meta"></p>
+      </header>
+      <section class="modal__section" id="modal-authors-section">
+        <h3 class="modal__section-title">Authors</h3>
+        <div id="modal-authors" class="modal__chips" role="list"></div>
+      </section>
+      <section class="modal__section" id="modal-affiliations-section">
+        <h3 class="modal__section-title">Affiliations</h3>
+        <div id="modal-affiliations" class="modal__list" role="list"></div>
+      </section>
+      <section class="modal__section" id="modal-abstract-section">
+        <h3 class="modal__section-title">Abstract</h3>
+        <p id="modal-abstract" class="modal__text"></p>
+      </section>
+      <section class="modal__section" id="modal-terms-section">
+        <h3 class="modal__section-title">Keywords</h3>
+        <div id="modal-terms" class="modal__chips" role="list"></div>
+      </section>
+      <section class="modal__section" id="modal-citation-section">
+        <h3 class="modal__section-title">Citation</h3>
+        <div class="modal__citation">
+          <p id="modal-citation" class="modal__text modal__text--muted"></p>
+          <button type="button" class="modal__link modal__link--ghost" id="modal-copy-citation">Copy citation</button>
+        </div>
+        <p class="modal__helper" id="modal-citation-feedback" role="status" aria-live="polite"></p>
+      </section>
+      <div class="modal__links" id="modal-links"></div>
+    </div>
   </div>
 
   <script type="module" src="js/main.js"></script>

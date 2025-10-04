@@ -6,20 +6,23 @@ export class PanZoom {
     this.scale = opts.scale || 1;
     this.minScale = opts.minScale || 0.2;
     this.maxScale = opts.maxScale || 3.5;
-    this.detailThreshold = opts.detailThreshold ?? 0.35;
+  this.performanceThreshold = opts.performanceThreshold || 0.32;
+  this.container.style.touchAction = 'none';
     // start with translate = center of container so stage (0,0) is center
     const rect = this.container.getBoundingClientRect();
     this.translate = {x: rect.width/2, y: rect.height/2};
     this.isPanning = false;
     this.last = {x:0,y:0};
     this.onChange = opts.onChange || null;
-    this.stage = this.container.querySelector('.stage');
+  this.stage = this.container.querySelector('.stage');
+  this._linkLayer = null;
+  this._lastTransformString = '';
     this._zoomAnimId = null;
     this._zoomTarget = {scale: this.scale, tx: this.translate.x, ty: this.translate.y};
-    this._cardCache = null;
-    this._lowDetailActive = false;
-    this._cullRaf = null;
-    this._cullQueued = false;
+    this._panFrame = null;
+    this._pendingPan = {dx:0, dy:0};
+  this._coarseActive = false;
+  this._panStateTimer = null;
     this._bindEvents();
     this._apply();
   }
@@ -27,19 +30,29 @@ export class PanZoom {
   _bindEvents(){
     // pointer drag
     this.container.addEventListener('pointerdown', e => {
+      if(e.button !== 0) return;
+      if(e.target?.closest('[data-panzoom-ignore]')){
+        return;
+      }
       // cancel zoom animation if active
       if(this._zoomAnimId != null){ cancelAnimationFrame(this._zoomAnimId); this._zoomAnimId = null; }
       this._zoomTarget = {scale: this.scale, tx: this.translate.x, ty: this.translate.y};
       this.isPanning = true; this.last = {x: e.clientX, y: e.clientY}; this.container.setPointerCapture(e.pointerId);
+      this._enterPanState();
     });
     this.container.addEventListener('pointermove', e => {
       if(!this.isPanning) return;
       const dx = e.clientX - this.last.x; const dy = e.clientY - this.last.y;
       this.last = {x: e.clientX, y: e.clientY};
-      this.translate.x += dx; this.translate.y += dy;
-      this._apply();
+      this._queuePan(dx, dy);
     });
-    this.container.addEventListener('pointerup', e => { this.isPanning = false; try{ this.container.releasePointerCapture?.(e.pointerId);}catch(e){} });
+    const finalizePan = e => {
+      this.isPanning = false;
+      this._exitPanState();
+      try{ this.container.releasePointerCapture?.(e.pointerId);}catch(err){}
+    };
+    this.container.addEventListener('pointerup', finalizePan);
+    this.container.addEventListener('pointercancel', finalizePan);
 
     // wheel zoom
     this.container.addEventListener('wheel', e => {
@@ -79,7 +92,7 @@ export class PanZoom {
 
       if(this._zoomAnimId == null){
         const step = () => {
-          const smoothing = 0.28;
+          const smoothing = 0.24;
           let active = false;
 
           const ds = this._zoomTarget.scale - this.scale;
@@ -91,7 +104,7 @@ export class PanZoom {
           }
 
           const dtx = this._zoomTarget.tx - this.translate.x;
-          if(Math.abs(dtx) > 0.01){
+          if(Math.abs(dtx) > 0.002){
             this.translate.x += dtx * smoothing;
             active = true;
           }else{
@@ -99,7 +112,7 @@ export class PanZoom {
           }
 
           const dty = this._zoomTarget.ty - this.translate.y;
-          if(Math.abs(dty) > 0.01){
+          if(Math.abs(dty) > 0.002){
             this.translate.y += dty * smoothing;
             active = true;
           }else{
@@ -112,6 +125,13 @@ export class PanZoom {
             this._zoomAnimId = requestAnimationFrame(step);
           }else{
             this._zoomAnimId = null;
+            this._pendingPan.dx = 0;
+            this._pendingPan.dy = 0;
+            if(this._panFrame != null){
+              cancelAnimationFrame(this._panFrame);
+              this._panFrame = null;
+            }
+            this._exitPanState(120);
           }
         };
         this._zoomAnimId = requestAnimationFrame(step);
@@ -124,11 +144,19 @@ export class PanZoom {
     const stage = this.stage || (this.stage = this.container.querySelector('.stage'));
     if(stage){
       // use matrix(s, 0, 0, s, tx, ty) so mapping is: screen = stage * s + translate
-      const s = this.scale; const tx = this.translate.x; const ty = this.translate.y;
-      stage.style.transform = `matrix(${s}, 0, 0, ${s}, ${tx}, ${ty})`;
-      this._ensureCardCache();
-      this._scheduleCull();
+  const matrixScale = Number.isFinite(this.scale) ? this.scale : 1;
+  const matrixTx = Number.isFinite(this.translate.x) ? this.translate.x : 0;
+  const matrixTy = Number.isFinite(this.translate.y) ? this.translate.y : 0;
+  const transformString = `matrix(${matrixScale.toFixed(6)}, 0, 0, ${matrixScale.toFixed(6)}, ${matrixTx.toFixed(4)}, ${matrixTy.toFixed(4)})`;
+  if(transformString !== this._lastTransformString){
+    stage.style.transform = transformString;
+    this._lastTransformString = transformString;
+  }
+      if(!this._linkLayer || !this._linkLayer.isConnected){
+        this._linkLayer = stage.querySelector('.link-layer');
+      }
     }
+    this._updatePerformanceMode();
     // update canvas for grid redraw
     if(this.canvas){
       if(typeof this.canvas.draw === 'function') this.canvas.draw();
@@ -142,86 +170,51 @@ export class PanZoom {
   setScale(s){ this.scale = Math.min(this.maxScale, Math.max(this.minScale, s)); this._apply(); }
   setTranslate(x,y){ this.translate.x = x; this.translate.y = y; this._apply(); }
 
-  refreshContent(){ this._cardCache = null; this._apply(); }
+  refreshContent(){ this._apply(); }
 
-  _ensureCardCache(){
-    const stage = this.stage;
-    if(!stage) return;
-    const cards = stage.querySelectorAll('.card');
-    if(this._cardCache && this._cardCache.length === cards.length) return;
-    this._cardCache = Array.from(cards).map(card => {
-      const x = card.dataset.x !== undefined ? Number(card.dataset.x) : parseFloat(card.style.left) || 0;
-      const y = card.dataset.y !== undefined ? Number(card.dataset.y) : parseFloat(card.style.top) || 0;
-      const w = card.dataset.w !== undefined ? Number(card.dataset.w) : (card.offsetWidth || 260);
-      const h = card.dataset.h !== undefined ? Number(card.dataset.h) : (card.offsetHeight || 150);
-      card.dataset.x = x;
-      card.dataset.y = y;
-      card.dataset.w = w;
-      card.dataset.h = h;
-      return {el: card, x, y, w, h, hidden: false};
+  _queuePan(dx, dy){
+    this._pendingPan.dx += dx;
+    this._pendingPan.dy += dy;
+    if(this._panFrame != null) return;
+    this._panFrame = requestAnimationFrame(() => {
+      this.translate.x += this._pendingPan.dx;
+      this.translate.y += this._pendingPan.dy;
+      this._pendingPan.dx = 0;
+      this._pendingPan.dy = 0;
+      this._panFrame = null;
+      this._apply();
     });
   }
 
-  _scheduleCull(){
-    this._cullQueued = true;
-    if(this._cullRaf != null) return;
-    this._cullRaf = requestAnimationFrame(() => {
-      this._cullRaf = null;
-      if(this._cullQueued){
-        this._cullQueued = false;
-        this._cullCards();
-      }
-    });
+  _updatePerformanceMode(){
+    const shouldBeCoarse = this.scale <= this.performanceThreshold;
+    if(shouldBeCoarse === this._coarseActive) return;
+    this._coarseActive = shouldBeCoarse;
+    if(shouldBeCoarse){
+      this.container.classList.add('viewport--coarse');
+      this.stage?.classList.add('stage--coarse');
+      this._linkLayer?.classList.add('link-layer--coarse');
+    }else{
+      this.container.classList.remove('viewport--coarse');
+      this.stage?.classList.remove('stage--coarse');
+      this._linkLayer?.classList.remove('link-layer--coarse');
+    }
   }
 
-  _cullCards(){
-    if(!this._cardCache) return;
-    const s = this.scale; const tx = this.translate.x; const ty = this.translate.y;
-    const viewport = this.container.getBoundingClientRect();
-    const vw = viewport.width; const vh = viewport.height;
-    const buffer = 80; // allow small margin to avoid popping at edges
+  _enterPanState(){
+    if(this._panStateTimer){ clearTimeout(this._panStateTimer); this._panStateTimer = null; }
+    this.container.classList.add('viewport--panning');
+    this.stage?.classList.add('stage--panning');
+    this._linkLayer?.classList.add('link-layer--panning');
+  }
 
-    if(s <= this.detailThreshold){
-      if(!this._lowDetailActive){
-        this._lowDetailActive = true;
-        this.stage?.classList.add('stage--low-detail');
-        this.container.classList.add('viewport--low-detail');
-      }
-      for(const card of this._cardCache){
-        if(!card.hidden){
-          card.el.style.display = 'none';
-          card.hidden = true;
-        }
-      }
-      return;
-    }
-
-    if(this._lowDetailActive){
-      this._lowDetailActive = false;
-      this.stage?.classList.remove('stage--low-detail');
-      this.container.classList.remove('viewport--low-detail');
-      for(const card of this._cardCache){
-        if(card.hidden){
-          card.hidden = false;
-          card.el.style.display = '';
-        }
-      }
-    }
-
-    for(const card of this._cardCache){
-      const screenLeft = card.x * s + tx;
-      const screenTop = card.y * s + ty;
-      const screenRight = screenLeft + card.w * s;
-      const screenBottom = screenTop + card.h * s;
-      const visible = screenRight >= -buffer && screenLeft <= vw + buffer && screenBottom >= -buffer && screenTop <= vh + buffer;
-
-      if(visible && card.hidden){
-        card.el.style.display = '';
-        card.hidden = false;
-      }else if(!visible && !card.hidden){
-        card.el.style.display = 'none';
-        card.hidden = true;
-      }
-    }
+  _exitPanState(delay = 80){
+    if(this._panStateTimer){ clearTimeout(this._panStateTimer); }
+    this._panStateTimer = setTimeout(()=>{
+      this.container.classList.remove('viewport--panning');
+      this.stage?.classList.remove('stage--panning');
+      this._linkLayer?.classList.remove('link-layer--panning');
+      this._panStateTimer = null;
+    }, delay);
   }
 }
