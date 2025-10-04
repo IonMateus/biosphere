@@ -1,24 +1,282 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Biosphere — Insights</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biosphere — Insights</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="js/insights.js"></script>
+  <link rel="shortcut icon" href="../assets/biospherelogo.png" type="image/x-icon">
 	<link rel="stylesheet" href="css/insights.css">
 </head>
 <body>
-	<header>
-		<h1>Insights</h1>
+	<div>
+		
 		<nav>
+			<h1>Insights</h1>
 			<a href="../home/">Home</a>
 			<a href="../search/">Search</a>
 		</nav>
-	</header>
+	</div>
+  <header>
+    <h1>Panorama de Publicações em Experimentos Espaciais</h1>
+    <p>Visão geral das pesquisas científicas realizadas em ambientes orbitais e experimentos espaciais.<br>
+      <strong>Total de publicações:</strong> 12.457 &nbsp;|&nbsp; <strong>Total de tópicos:</strong> 328
+    </p>
+  </header>
 
-	<main>
-		<p>Conteúdo de insights em construção.</p>
-	</main>
+  <section id="grafico-incidencia">
+    <h2>Incidência de Publicações por Ano</h2>
+    <div class="flex">
+      <canvas id="chartPublicacoes"></canvas>
+      <div style="max-width: 400px;">
+        <p>
+          O gráfico ao lado mostra a evolução do número de publicações relacionadas a experimentos espaciais
+          ao longo dos últimos anos. É possível observar um crescimento constante impulsionado por novas
+          missões orbitais e avanços tecnológicos.
+        </p>
+        <p>
+          Escolha um tópico específico para comparar sua frequência com o total de publicações:
+        </p>
+        <select id="topicSelect">
+          <option value="Propulsão">Propulsão</option>
+          <option value="Microgravidade">Microgravidade</option>
+          <option value="Materiais">Materiais</option>
+          <option value="Radiação Cósmica">Radiação Cósmica</option>
+        </select>
+      </div>
+    </div>
+  </section>
 
-	<script type="module" src="js/insights.js"></script>
+  <section id="topicos">
+    <h2>Tópicos e Palavras-Chave</h2>
+    <div class="flex">
+      <div class="card">
+        <h3>15 Tópicos com mais publicações (últimos 5 anos)</h3>
+        <ul id="listaTopicos"></ul>
+      </div>
+
+      <div class="card">
+        <h3>15 Palavras mais frequentes</h3>
+        <ul id="listaPalavras"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="artigos">
+    <h2>20 Artigos Mais Citados</h2>
+    <div class="card" style="width: 100%; max-width: 800px;">
+      <ul id="listaArtigos"></ul>
+    </div>
+  </section>
+
+  <section id="autores">
+    <h2>Autores</h2>
+    <div class="flex">
+      <div class="card">
+        <h3>Mais publicações</h3>
+        <ul id="autoresPublicacoes"></ul>
+      </div>
+      <div class="card">
+        <h3>Mais publicações (tópico: Microgravidade)</h3>
+        <ul id="autoresPorTopico"></ul>
+      </div>
+      <div class="card">
+        <h3>Mais citações</h3>
+        <ul id="autoresMaisCitados"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="instituicoes">
+    <h2>Instituições</h2>
+    <div class="flex">
+      <div class="card">
+        <h3>Mais citações</h3>
+        <ul id="instituicoesCitacoes"></ul>
+      </div>
+      <div class="card">
+        <h3>Mais publicações</h3>
+        <ul id="instituicoesPublicacoes"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="articlesDetails">
+    <h2>Detail of articles</h2>
+    <h3>Choose an article to search its informations</h3>
+    <select id="articleSelect">
+      <option value="article1">Article 1</option>
+      <option value="article2">Article 2</option>
+      <option value="article3">Article 3</option>
+      <option value="article4">Article 4</option>
+      <option value="article5">Article 5</option>
+      <option value="article6">Article 6</option>
+    </select>
+  </section>
+
+  <section id="authorsMap">
+    <h2>Mapa de Relações entre Autores</h2>
+    <svg id="graph" width="800" height="600"></svg>
+  </section>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const topicSelect = document.getElementById('topicSelect');
+    topicSelect.addEventListener('change', (e) => {
+      const topic = e.target.value;
+      const topicFreq = {
+        'Propulsão': [100,120,140,160,190,210,250,280,300],
+        'Microgravidade': [90,100,130,180,220,270,310,360,400],
+        'Materiais': [70,90,110,140,160,200,220,250,280],
+        'Radiação Cósmica': [80,100,120,150,190,230,260,290,320]
+      };
+      chart.data.datasets[1] = {
+        label: `Tópico: ${topic}`,
+        data: topicFreq[topic],
+        borderColor: '#e1b12c',
+        borderDash: [5,5],
+        tension: 0.3
+      };
+      chart.update();
+    });
+
+
+    // dados fictícios para testar o mapa
+    const data = {
+      nodes: [
+        { id: "Maria Fernandes", group: "Microgravidade", papers: ["Biological Responses to Microgravity", "Cosmic Dust Dynamics"] },
+        { id: "João Carvalho", group: "Microgravidade", papers: ["Quantum Communication in LEO"] },
+        { id: "Ana Ribeiro", group: "Radiação", papers: ["Radiation Effects in Orbit", "AI-driven Telemetry Optimization"] },
+        { id: "Carlos Nogueira", group: "Propulsão", papers: ["Propulsion Efficiency Models"] },
+        { id: "Fernanda Souza", group: "Propulsão" },
+        { id: "Marina Costa", group: "Materiais" },
+        { id: "Rafael Lima", group: "Radiação" },
+        { id: "Isabel Duarte", group: "Astrobiologia" },   // isolado
+        { id: "Pedro Alves", group: "Energia Solar" }      // isolado
+      ],
+      links: [
+        { source: "Maria Fernandes", target: "João Carvalho", papers: ["Artigo A", "Artigo B"] },
+        { source: "Maria Fernandes", target: "Ana Ribeiro", papers: ["Artigo C", "Artigo D"] },
+        { source: "Carlos Nogueira", target: "Fernanda Souza", papers: ["Artigo E", "Artigo F"] },
+        { source: "Ana Ribeiro", target: "Rafael Lima", papers: ["Artigo G"] },
+        { source: "Marina Costa", target: "Maria Fernandes", papers: ["Artigo H", "Artigo I", "Artigo J"] },
+        { source: "João Carvalho", target: "Fernanda Souza", papers: ["Artigo K", "Artigo L"] }
+        // Isabel Duarte e Pedro Alves não aparecem aqui → isolados
+      ]
+    };
+
+    const width = 1000, height = 1000;
+    const svg = d3.select("#graph")
+      .attr("width", width)
+      .attr("height", height);
+
+    const tooltip = d3.select("#tooltip");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const simulation = d3.forceSimulation(data.nodes)
+      .force("link", d3.forceLink(data.links).id(d => d.id).distance(200))
+      .force("charge", d3.forceManyBody().strength(-200))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+
+    // Links
+    const link = svg.append("g")
+      .attr("stroke", "#aaa")
+      .attr("stroke-opacity", 0.8)
+      .selectAll("line")
+      .data(data.links)
+      .join("line")
+      .attr("stroke-width", 2)
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        const html = `<strong>${d.source.id} + ${d.target.id}</strong><br>` +
+                    d.papers.map(p => `• ${p}`).join("<br>");
+        tooltip
+          .html(html)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("display", "block");
+        event.stopPropagation(); // impede esconder ao clicar no SVG
+      });
+
+    // Nodes
+    const node = svg.append("g")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .selectAll("circle")
+      .data(data.nodes)
+      .join("circle")
+      .attr("r", 12)
+      .attr("fill", d => color(d.group))
+      .style("cursor", "pointer")
+      .call(drag(simulation))
+      .on("click", (event, d) => {
+        const html = `<strong>${d.id}</strong><br>` +
+                    (d.papers?.length ? d.papers.map(p => `• ${p}`).join("<br>") : "Nenhum artigo registrado");
+        tooltip
+          .html(html)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("display", "block");
+        event.stopPropagation();
+      });
+
+    // Labels
+    const label = svg.append("g")
+      .selectAll("text")
+      .data(data.nodes)
+      .join("text")
+      .attr("dy", -15)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "#fff")
+      .text(d => d.id);
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node
+        .attr("cx", d => d.x = Math.max(20, Math.min(width - 20, d.x)))
+        .attr("cy", d => d.y = Math.max(20, Math.min(height - 20, d.y)));
+
+      label
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+    });
+
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    }
+
+    // Ocultar tooltip ao clicar fora
+    svg.on("click", () => tooltip.style("display", "none"));
+
+  </script>
 </body>
 </html>
+
