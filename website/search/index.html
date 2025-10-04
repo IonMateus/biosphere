@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Biosphere — Search Grid</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/search.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">Biosphere</div>
+      <div class="controls">
+        <label class="small">Zoom: <output id="zoom-output">1.00</output></label>
+      </div>
+    </header>
+
+    <main class="viewport">
+      <canvas id="grid-canvas" class="grid-canvas"></canvas>
+      <div id="stage" class="stage" aria-live="polite"></div>
+    </main>
+
+    <footer class="app-footer">Use mouse drag to pan, mouse wheel to zoom. Showing cards from dataset.</footer>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
