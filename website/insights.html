@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panorama Espacial de Publicações Científicas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/insight.js" defer></script>
   <style>
     body {
       margin: 0;
@@ -134,44 +135,12 @@
     <div class="flex">
       <div class="card">
         <h3>15 Tópicos com mais publicações (últimos 5 anos)</h3>
-        <ul>
-          <li>Microgravidade — 412</li>
-          <li>Propulsão — 380</li>
-          <li>Radiação Cósmica — 355</li>
-          <li>Vida Artificial — 310</li>
-          <li>Astrobiologia — 295</li>
-          <li>Materiais Avançados — 280</li>
-          <li>Energia Solar — 260</li>
-          <li>Navegação Autônoma — 240</li>
-          <li>Robótica Espacial — 235</li>
-          <li>IA Aplicada a Missões — 220</li>
-          <li>Reentrada Atmosférica — 215</li>
-          <li>Física de Plasma — 200</li>
-          <li>Exobiologia — 190</li>
-          <li>Mineração Espacial — 182</li>
-          <li>Comunicação Quântica — 170</li>
-        </ul>
+        <ul id="listaTopicos"></ul>
       </div>
 
       <div class="card">
         <h3>15 Palavras mais frequentes</h3>
-        <ul>
-          <li>microgravidade</li>
-          <li>radiação</li>
-          <li>órbita</li>
-          <li>propulsão</li>
-          <li>plasma</li>
-          <li>robótica</li>
-          <li>satélite</li>
-          <li>IA</li>
-          <li>energia</li>
-          <li>dados</li>
-          <li>comunicação</li>
-          <li>biologia</li>
-          <li>experimento</li>
-          <li>análise</li>
-          <li>missão</li>
-        </ul>
+        <ul id="listaPalavras"></ul>
       </div>
     </div>
   </section>
@@ -179,28 +148,7 @@
   <section id="artigos">
     <h2>20 Artigos Mais Citados</h2>
     <div class="card" style="width: 100%; max-width: 800px;">
-      <ul>
-        <li>“Cosmic Dust Dynamics” — 3.240 citações</li>
-        <li>“Thermal Effects in Orbital Platforms” — 2.910 citações</li>
-        <li>“Biological Responses to Microgravity” — 2.850 citações</li>
-        <li>“Quantum Communication in LEO” — 2.740 citações</li>
-        <li>“Materials Aging in Vacuum” — 2.640 citações</li>
-        <li>“Autonomous Navigation under Radiation” — 2.510 citações</li>
-        <li>“Solar Panel Efficiency in Orbit” — 2.440 citações</li>
-        <li>“Magnetic Shielding for Deep Space Missions” — 2.310 citações</li>
-        <li>“Propulsion Efficiency Models” — 2.200 citações</li>
-        <li>“AI-driven Telemetry Optimization” — 2.140 citações</li>
-        <li>“Orbital Debris Mapping” — 2.050 citações</li>
-        <li>“Biofilm Growth in Zero-G” — 1.970 citações</li>
-        <li>“Thermal Noise in Quantum Sensors” — 1.850 citações</li>
-        <li>“Deep Space Power Systems” — 1.740 citações</li>
-        <li>“Vacuum Metallurgy Advances” — 1.690 citações</li>
-        <li>“Optical Communication Arrays” — 1.580 citações</li>
-        <li>“Cosmic Ray Shielding Tests” — 1.550 citações</li>
-        <li>“Additive Manufacturing in Space” — 1.490 citações</li>
-        <li>“Cryogenic Systems for Space Labs” — 1.420 citações</li>
-        <li>“Radiation Damage in Electronics” — 1.380 citações</li>
-      </ul>
+      <ul id="listaArtigos"></ul>
     </div>
   </section>
 
@@ -209,27 +157,15 @@
     <div class="flex">
       <div class="card">
         <h3>Mais publicações</h3>
-        <ul>
-          <li>Maria Fernandes — 145</li>
-          <li>Carlos Nogueira — 132</li>
-          <li>Ana Ribeiro — 121</li>
-        </ul>
+        <ul id="autoresPublicacoes"></ul>
       </div>
       <div class="card">
         <h3>Mais publicações (tópico: Microgravidade)</h3>
-        <ul>
-          <li>João Carvalho — 64</li>
-          <li>Fernanda Souza — 59</li>
-          <li>Marina Costa — 52</li>
-        </ul>
+        <ul id="autoresPorTopico"></ul>
       </div>
       <div class="card">
         <h3>Mais citações</h3>
-        <ul>
-          <li>Maria Fernandes — 12.300</li>
-          <li>Rafael Lima — 11.850</li>
-          <li>Ana Ribeiro — 10.970</li>
-        </ul>
+        <ul id="autoresMaisCitados"></ul>
       </div>
     </div>
   </section>
@@ -239,66 +175,14 @@
     <div class="flex">
       <div class="card">
         <h3>Mais citações</h3>
-        <ul>
-          <li>NASA — 38.420</li>
-          <li>ESA — 35.180</li>
-          <li>JAXA — 30.560</li>
-        </ul>
+        <ul id="instituicoesCitacoes"></ul>
       </div>
       <div class="card">
         <h3>Mais publicações</h3>
-        <ul>
-          <li>NASA — 1.820</li>
-          <li>ESA — 1.530</li>
-          <li>CNES — 1.210</li>
-          <li>Roscosmos — 980</li>
-        </ul>
+        <ul id="instituicoesPublicacoes"></ul>
       </div>
     </div>
   </section>
 
-  <script>
-    const ctx = document.getElementById('chartPublicacoes');
-    const publicacoesData = {
-      labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'],
-      datasets: [{
-        label: 'Publicações Totais',
-        data: [420, 480, 550, 620, 710, 810, 950, 1020, 1100],
-        borderColor: '#00a8ff',
-        tension: 0.3
-      }]
-    };
-
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: publicacoesData,
-      options: {
-        plugins: { legend: { labels: { color: '#fff' } } },
-        scales: {
-          x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
-          y: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
-        }
-      }
-    });
-
-    const topicSelect = document.getElementById('topicSelect');
-    topicSelect.addEventListener('change', (e) => {
-      const topic = e.target.value;
-      const topicFreq = {
-        'Propulsão': [100,120,140,160,190,210,250,280,300],
-        'Microgravidade': [90,100,130,180,220,270,310,360,400],
-        'Materiais': [70,90,110,140,160,200,220,250,280],
-        'Radiação Cósmica': [80,100,120,150,190,230,260,290,320]
-      };
-      chart.data.datasets[1] = {
-        label: `Tópico: ${topic}`,
-        data: topicFreq[topic],
-        borderColor: '#e1b12c',
-        borderDash: [5,5],
-        tension: 0.3
-      };
-      chart.update();
-    });
-  </script>
 </body>
 </html>
