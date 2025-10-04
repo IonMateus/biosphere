@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dataset Figures Viewer</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  .figure { margin-bottom: 30px; }
+  .figure img { max-width: 100%; height: auto; display: block; }
+  .caption { margin-top: 5px; font-size: 0.9em; }
+  button { padding: 10px 20px; font-size: 1em; margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Dataset Figures</h1>
+<div id="figures-container"></div>
+<button id="loadMoreBtn">Load More</button>
+
+<script>
+let dataset = []; // carrega o dataset.json aqui
+let currentIndex = 0;
+const pageSize = 20;
+
+// Monta o link funcional para PLOS ONE
+function getFigureUrl(figure, doi) {
+  let match = figure.id.match(/g\d+$/);
+  if (!match) return null;
+  let gNumber = match[0];
+  return `https://journals.plos.org/plosone/article/figure/image?size=large&id=${encodeURIComponent(doi)}.${gNumber}`;
+}
+
+function renderFigures() {
+  const container = document.getElementById("figures-container");
+  const endIndex = Math.min(currentIndex + pageSize, dataset.length);
+
+  for (let i = currentIndex; i < endIndex; i++) {
+    let article = dataset[i];
+    let doi = article.doi;
+
+    if (!article.figures) continue;
+
+    article.figures.forEach(fig => {
+      const figDiv = document.createElement("div");
+      figDiv.className = "figure";
+
+      const imgUrl = getFigureUrl(fig, doi);
+      if (imgUrl) {
+        const img = document.createElement("img");
+        img.src = imgUrl;
+        img.alt = fig.title;
+        figDiv.appendChild(img);
+      }
+
+      const caption = document.createElement("div");
+      caption.className = "caption";
+      caption.innerHTML = `<strong>${fig.title}</strong><br>${fig.caption}<br><a href="${fig.url}" target="_blank">Original URL</a>`;
+      figDiv.appendChild(caption);
+
+      container.appendChild(figDiv);
+    });
+  }
+
+  currentIndex = endIndex;
+  if (currentIndex >= dataset.length) {
+    document.getElementById("loadMoreBtn").style.display = "none";
+  }
+}
+
+document.getElementById("loadMoreBtn").addEventListener("click", renderFigures);
+
+// Carregar dataset externo
+fetch('dataset.json')
+  .then(res => res.json())
+  .then(data => {
+    dataset = data;
+    renderFigures();
+  })
+  .catch(err => console.error("Erro ao carregar dataset:", err));
+</script>
+
+</body>
+</html>
