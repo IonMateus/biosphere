@@ -1,11 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioSphere</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>BioSphere</title>
+            <meta name="description" content="BioSphere — explore NASA bioscience publications.">
+            <link rel="stylesheet" href="./css/home/home.css">
+            <link rel="icon" href="./assets/biospherelogo.png">
+            <style>
+                /* dark theme defaults (will be overridden by css files) */
+                :root{--bg:#000;--surface:#0b0b0b;--text:#fff;--accent:#22c55e;--muted:#9ca3af}
+                html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+            </style>
 </head>
 <body>
-    <h1>Home</h1>
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="/">BioSphere</a>
+            <nav class="main-nav" aria-label="Main navigation">
+                <a href="#about">About</a>
+                <a href="#challenge">Challenge</a>
+                <a href="#team">Team</a>
+                <a href="#video">Video</a>
+            </nav>
+        </div>
+    </header>
+
+        <main>
+        <section id="hero" class="hero">
+            <div class="container">
+                <h1>BioSphere<br><small>NASA Space Apps Challenge 2025</small></h1>
+                <p class="lead">Explore NASA bioscience publications and quickly find relevant information about space experiments.</p>
+                <p><a class="btn primary" href="#search">Explore dataset</a></p>
+            </div>
+        </section>
+
+        <section id="about" class="about container">
+            <h2>About</h2>
+            <p>BioSphere is a platform developed for the NASA Space Apps Challenge 2025 that makes it easier to explore NASA bioscience publications. It helps users quickly find relevant information about space experiments, visualize results, and connect papers to datasets and media.</p>
+        </section>
+
+        <section id="challenge" class="challenge container">
+            <h2>The Challenge</h2>
+            <p>The NASA Space Apps Challenge asks teams to build tools that surface insights from space data. BioSphere focuses on bioscience literature, enabling efficient discovery and browsing of publications and related resources.</p>
+            <ul>
+                <li>Search and filter bioscience publications</li>
+                <li>Highlight experiments and key findings</li>
+                <li>Link to datasets, images and full-text where available</li>
+            </ul>
+        </section>
+
+            <section id="team" class="team container">
+                <h2>Team</h2>
+                <p class="muted">Team members (pulled live from GitHub)</p>
+                <div class="team-grid" id="team-grid">
+                    <!-- team cards will be injected here by js/home/team.js -->
+                </div>
+            </section>
+
+            <section id="video" class="video container">
+                <h2>Presentation</h2>
+                <div class="video-wrap">
+                    <iframe width="720" height="405" src="https://www.youtube.com/embed/GyAR1Bo_Ny4" title="BioSphere Presentation" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>© 2025 BioSphere — NASA Space Apps Challenge</p>
+                <p class="muted">Project: BioSphere - a platform to explore NASA bioscience publications.</p>
+                <div class="event-logo">
+                    <img src="./assets/nasaSpaceAppsChallenge.png" alt="NASA Space Apps Challenge"/>
+                </div>
+        </div>
+    </footer>
+
+    <script type="module" src="./js/home/home.js"></script>
 </body>
 </html>
