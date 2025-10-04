@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panorama Espacial de Publicações Científicas</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -96,6 +97,19 @@
       font-size: 1rem;
       margin-top: 10px;
     }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      pointer-events: none;
+      max-width: 250px;
+      display: none;
+    }
+
   </style>
 </head>
 <body>
@@ -257,6 +271,26 @@
     </div>
   </section>
 
+  <section id="articlesDetails">
+    <h2>Detail of articles</h2>
+    <h3>Choose an article to search its informations</h3>
+    <select id="articleSelect">
+      <option value="article1">Article 1</option>
+      <option value="article2">Article 2</option>
+      <option value="article3">Article 3</option>
+      <option value="article4">Article 4</option>
+      <option value="article5">Article 5</option>
+      <option value="article6">Article 6</option>
+    </select>
+  </section>
+
+  <section id="authorsMap">
+    <h2>Mapa de Relações entre Autores</h2>
+    <svg id="graph" width="800" height="600"></svg>
+  </section>
+
+  <div id="tooltip" class="tooltip"></div>
+
   <script>
     const ctx = document.getElementById('chartPublicacoes');
     const publicacoesData = {
@@ -299,6 +333,139 @@
       };
       chart.update();
     });
+
+
+    // dados fictícios para testar o mapa
+    const data = {
+      nodes: [
+        { id: "Maria Fernandes", group: "Microgravidade", papers: ["Biological Responses to Microgravity", "Cosmic Dust Dynamics"] },
+        { id: "João Carvalho", group: "Microgravidade", papers: ["Quantum Communication in LEO"] },
+        { id: "Ana Ribeiro", group: "Radiação", papers: ["Radiation Effects in Orbit", "AI-driven Telemetry Optimization"] },
+        { id: "Carlos Nogueira", group: "Propulsão", papers: ["Propulsion Efficiency Models"] },
+        { id: "Fernanda Souza", group: "Propulsão" },
+        { id: "Marina Costa", group: "Materiais" },
+        { id: "Rafael Lima", group: "Radiação" },
+        { id: "Isabel Duarte", group: "Astrobiologia" },   // isolado
+        { id: "Pedro Alves", group: "Energia Solar" }      // isolado
+      ],
+      links: [
+        { source: "Maria Fernandes", target: "João Carvalho", papers: ["Artigo A", "Artigo B"] },
+        { source: "Maria Fernandes", target: "Ana Ribeiro", papers: ["Artigo C", "Artigo D"] },
+        { source: "Carlos Nogueira", target: "Fernanda Souza", papers: ["Artigo E", "Artigo F"] },
+        { source: "Ana Ribeiro", target: "Rafael Lima", papers: ["Artigo G"] },
+        { source: "Marina Costa", target: "Maria Fernandes", papers: ["Artigo H", "Artigo I", "Artigo J"] },
+        { source: "João Carvalho", target: "Fernanda Souza", papers: ["Artigo K", "Artigo L"] }
+        // Isabel Duarte e Pedro Alves não aparecem aqui → isolados
+      ]
+    };
+
+    const width = 1000, height = 1000;
+    const svg = d3.select("#graph")
+      .attr("width", width)
+      .attr("height", height);
+
+    const tooltip = d3.select("#tooltip");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const simulation = d3.forceSimulation(data.nodes)
+      .force("link", d3.forceLink(data.links).id(d => d.id).distance(200))
+      .force("charge", d3.forceManyBody().strength(-200))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+
+    // Links
+    const link = svg.append("g")
+      .attr("stroke", "#aaa")
+      .attr("stroke-opacity", 0.8)
+      .selectAll("line")
+      .data(data.links)
+      .join("line")
+      .attr("stroke-width", 2)
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        const html = `<strong>${d.source.id} + ${d.target.id}</strong><br>` +
+                    d.papers.map(p => `• ${p}`).join("<br>");
+        tooltip
+          .html(html)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("display", "block");
+        event.stopPropagation(); // impede esconder ao clicar no SVG
+      });
+
+    // Nodes
+    const node = svg.append("g")
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .selectAll("circle")
+      .data(data.nodes)
+      .join("circle")
+      .attr("r", 12)
+      .attr("fill", d => color(d.group))
+      .style("cursor", "pointer")
+      .call(drag(simulation))
+      .on("click", (event, d) => {
+        const html = `<strong>${d.id}</strong><br>` +
+                    (d.papers?.length ? d.papers.map(p => `• ${p}`).join("<br>") : "Nenhum artigo registrado");
+        tooltip
+          .html(html)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("display", "block");
+        event.stopPropagation();
+      });
+
+    // Labels
+    const label = svg.append("g")
+      .selectAll("text")
+      .data(data.nodes)
+      .join("text")
+      .attr("dy", -15)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("fill", "#fff")
+      .text(d => d.id);
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node
+        .attr("cx", d => d.x = Math.max(20, Math.min(width - 20, d.x)))
+        .attr("cy", d => d.y = Math.max(20, Math.min(height - 20, d.y)));
+
+      label
+        .attr("x", d => d.x)
+        .attr("y", d => d.y);
+    });
+
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+      return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    }
+
+    // Ocultar tooltip ao clicar fora
+    svg.on("click", () => tooltip.style("display", "none"));
+
   </script>
 </body>
 </html>
