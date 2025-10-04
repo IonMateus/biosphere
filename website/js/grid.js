@@ -36,9 +36,9 @@ export class GridCanvas {
     const S = scale;
 
     ctx.save();
-    // move to stage origin on screen and scale to stage units
-    ctx.translate(tx, ty);
-    ctx.scale(S, S);
+  // make the canvas drawing transform match the stage CSS matrix (scale + translate)
+  const pr = this.pixelRatio;
+  ctx.setTransform(S * pr, 0, 0, S * pr, tx * pr, ty * pr);
 
     // compute visible region in stage coordinates
     const leftStage = (0 - tx) / S;
@@ -48,7 +48,7 @@ export class GridCanvas {
 
     // lines every baseSpacing in stage coordinates
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1 / Math.max(0.0001, S);
+  ctx.lineWidth = 1 / Math.max(0.0001, S * pr);
 
     const startX = Math.floor(leftStage / baseSpacing) * baseSpacing;
     for(let x = startX; x <= rightStage; x += baseSpacing){

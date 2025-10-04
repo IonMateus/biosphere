@@ -37,7 +37,8 @@ export class PanZoom {
     this.container.addEventListener('wheel', e => {
       e.preventDefault();
       const rect = this.container.getBoundingClientRect();
-      const cx = e.clientX - rect.left; const cy = e.clientY - rect.top;
+      // center-based zoom: use the center of the viewport as focal point
+      const cx = rect.width / 2; const cy = rect.height / 2;
       const delta = -e.deltaY * 0.0015;
       const newScale = Math.min(this.maxScale, Math.max(this.minScale, this.scale * (1 + delta)));
 
@@ -47,7 +48,7 @@ export class PanZoom {
       const targetTx = this.translate.x + cx * (1 / targetScale - 1 / oldScale);
       const targetTy = this.translate.y + cy * (1 / targetScale - 1 / oldScale);
 
-      // animate smoothly from current scale/translate to target
+  // animate smoothly from current scale/translate to target
       if(this._zoomAnim){ cancelAnimationFrame(this._zoomAnim.frame); this._zoomAnim = null; }
       const startScale = this.scale; const startTx = this.translate.x; const startTy = this.translate.y;
       const duration = 220; const startTime = performance.now();
@@ -71,7 +72,9 @@ export class PanZoom {
     // apply transform to stage element
     const stage = this.container.querySelector('.stage');
     if(stage){
-      stage.style.transform = `translate(${this.translate.x}px, ${this.translate.y}px) scale(${this.scale})`;
+      // use matrix(s, 0, 0, s, tx, ty) so mapping is: screen = stage * s + translate
+      const s = this.scale; const tx = this.translate.x; const ty = this.translate.y;
+      stage.style.transform = `matrix(${s}, 0, 0, ${s}, ${tx}, ${ty})`;
     }
     // update canvas for grid redraw
     if(this.canvas && this.canvas.resize) this.canvas.resize();
