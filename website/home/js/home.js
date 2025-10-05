@@ -72,9 +72,7 @@ function createMemberCard(user){
   return div;
 }
 
-async function initTeam(){
-  const grid = document.getElementById('team-grid');
-  if(!grid) return;
+async function fetchGitHubUsers(){
   const fetches = GITHUB_USERS.map(u => fetch(`https://api.github.com/users/${u}`)
     .then(r=>{
       if(!r.ok){
@@ -84,16 +82,19 @@ async function initTeam(){
       return r.json();
     })
     .catch(err=>{
-      // return a minimal fallback user object with local avatar
       console.debug('Using fallback user for', u, err && err.message);
       return {login:u, name:u, avatar_url:'../assets/biospherelogo.png'};
     })
   );
+  return Promise.all(fetches);
+}
 
-  const users = await Promise.all(fetches);
+async function renderTeam(users){
+  const grid = document.getElementById('team-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
   users.forEach(u=>{
     const card = createMemberCard(u);
-    // link to profile
     const a = document.createElement('a');
     a.href = `https://github.com/${u.login}`;
     a.target = '_blank';
@@ -101,6 +102,35 @@ async function initTeam(){
     a.appendChild(card);
     grid.appendChild(a);
   });
+}
+
+async function initTeam(){
+  const lastEl = document.getElementById('team-last-updated');
+  const refreshBtn = document.getElementById('team-refresh');
+
+  async function doRefresh(){
+    if(refreshBtn) refreshBtn.disabled = true;
+    try{
+      const users = await fetchGitHubUsers();
+      await renderTeam(users);
+      if(lastEl){
+        const now = new Date();
+        lastEl.textContent = `Atualizado em ${now.toLocaleString()}`;
+      }
+    }catch(err){
+      console.error('Error refreshing team', err);
+      if(lastEl) lastEl.textContent = 'Falha ao atualizar';
+    }finally{
+      if(refreshBtn) refreshBtn.disabled = false;
+    }
+  }
+
+  if(refreshBtn){
+    refreshBtn.addEventListener('click', doRefresh);
+  }
+
+  // initial load
+  await doRefresh();
 }
 
 /* VIDEO: ensure fallback behaviour for plain <video> tags (not used for iframe) */

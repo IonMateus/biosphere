@@ -18,11 +18,20 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 header + main{padding-top:0}
 
 /* Hero */
-.hero{padding:5rem 0;min-height:100vh;display:flex;align-items:center;transition:opacity 420ms cubic-bezier(.2,.9,.2,1),transform 420ms cubic-bezier(.2,.9,.2,1);opacity:0;transform:translateY(6px);}
+.hero{padding:5rem 0;min-height:100vh;display:flex;align-items:center;position:relative;transition:opacity 420ms cubic-bezier(.2,.9,.2,1),transform 420ms cubic-bezier(.2,.9,.2,1);opacity:0;transform:translateY(6px);}
 .hero h1{font-size:2.25rem;margin:0 0 0.35rem 0;color:var(--text);line-height:1.02}
 .hero h1 small{font-size:0.54em;color:var(--muted);display:block;margin-top:4px}
 .hero .lead{color:var(--muted);max-width:64ch;margin:0 auto}
 .hero--visible{opacity:1 !important;transform:none}
+
+/* very subtle dotted overlay */
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.02) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.015) 1.6px, transparent 1.6px);
+  background-size:32px 32px,48px 48px;
+}
+
+/* ensure hero content sits above the overlay */
+.hero > .container{position:relative;z-index:1}
 
 /* ensure hero content sits below fixed header */
 .hero > .container{padding-top:0}
@@ -61,6 +70,10 @@ header + main{padding-top:0}
 /* Team */
 .team{padding:2rem 0}
 .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:0.25rem 0;align-items:start;justify-items:stretch}
+/* team controls (refresh button + timestamp) */
+.team-controls{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem}
+.team-controls .muted{font-size:0.95rem}
+.team-controls .btn{padding:0.45rem 0.8rem;border-radius:8px}
 .member{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   /* use a transparent 2px border to avoid layout shift when highlighting */
   border:2px solid transparent;
@@ -77,16 +90,13 @@ header + main{padding-top:0}
 .video{display:none}
 
 /* Hero enhancements requested: dotted background already present via radial-gradient in .hero; add subtle circles and a sparkling border around the hero image */
-/* stronger gradient and more visible dots */
-.hero{background-image: radial-gradient(rgba(255,255,255,0.045) 1.6px, transparent 1.6px), linear-gradient(180deg, rgba(34,197,94,0.16), rgba(3,7,15,0.26)), url('https://images.unsplash.com/photo-1701894160394-58d5be1605b9?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDEzfHx8ZW58MHx8fHx8');
-  background-size:10px 10px,cover;background-position:center;background-repeat:no-repeat}
+/* stronger gradient; use ::before for the dotted overlay to avoid duplicate dot layers */
+.hero{background-image: linear-gradient(180deg, rgba(34,197,94,0.16), rgba(3,7,15,0.26)), url('');
+  background-size:cover;background-position:center;background-repeat:no-repeat}
 
-.hero-image-wrap{display:inline-block;padding:8px;border-radius:16px;position:relative}
-.hero-image-wrap::after{content:"";position:absolute;inset:-6px;border-radius:20px;pointer-events:none;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));filter:blur(6px);mix-blend-mode:screen}
-.hero-image{width:100%;height:100%;max-width:520px;border-radius:12px;object-fit:cover;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
 
-/* small decorative circular pattern overlay (subtle) */
-.hero::before{content:"";position:absolute;left:0;right:0;top:0;bottom:0;background-image:radial-gradient(circle at 20% 20%, rgba(255,255,255,0.045) 3px, transparent 3px), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.03) 2.6px, transparent 2.6px);background-size:20px 20px,32px 32px;pointer-events:none;z-index:0}
+
+
 
 /* Header: only make the search and insights links green */
 .main-nav a.search-link, .main-nav a.insights-link{color:var(--accent) !important;font-weight:700}
