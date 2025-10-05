@@ -6,12 +6,16 @@
   <title>Biosphere — Search Grid</title>
   <link rel="stylesheet" href="css/theme.css" />
   <link rel="stylesheet" href="css/search.css" />
+  <link rel="shortcut icon" href="../assets/biospherelogo.png" type="image/x-icon">
 </head>
 <body>
   <div class="app">
     <header class="app-header">
       <div class="header-top">
-        <div class="brand">Biosphere</div>
+        <a class="brand" href="/home" style="font-weight:700;color:#22c55e;text-decoration:none;font-size:1.15rem;display:inline-flex;align-items:center;gap:0.5rem">
+                <img src="../assets/biospherelogo.png" alt="BioSphere logo" style="height:28px;vertical-align:middle;margin-right:8px">
+                BioSphere
+            </a>
         <div class="status">
           <label class="small">Zoom: <output id="zoom-output">1.00</output></label>
           <span class="small" id="result-count" aria-live="polite">Loading…</span>
