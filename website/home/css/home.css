@@ -53,11 +53,10 @@ header + main{padding-top:0}
 .about p{line-height:1.6;color:var(--muted);font-size:1.02rem}
 
 /* Challenge */
-.challenge{padding:3rem 0}
-.challenge .cards{display:flex;gap:1rem;flex-wrap:wrap}
-.challenge .card{flex:1 1 220px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:1.05rem;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.5)}
-.challenge ul{margin-top:0.5rem}
-.challenge li{margin:0.4rem 0}
+.challenge{padding:0 0 3rem 0}
+.challenge p{line-height:1.6;color:var(--muted);font-size:1.02rem}
+.challenge a{color: var(--text); text-decoration: none;}
+.challenge a:hover{text-decoration: underline;}
 
 /* Team */
 .team{padding:2rem 0}
