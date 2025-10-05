@@ -1,29 +1,42 @@
 // cards.js - create card elements and scatter them on the stage
 export function createCard(article){
-  const el = document.createElement('article'); el.className = 'card';
-  const h = document.createElement('h3'); h.textContent = article.title || 'Untitled'; el.appendChild(h);
-  const metaPieces = [];
-  if(typeof article.year === 'number') metaPieces.push(String(article.year));
-  if(Array.isArray(article.authors) && article.authors.length){
-    const primaryAuthors = article.authors.slice(0,2).join(', ');
-    const remaining = article.authors.length - 2;
-    metaPieces.push(remaining > 0 ? `${primaryAuthors} +${remaining}` : primaryAuthors);
-  }
-  if(article.journal) metaPieces.push(article.journal);
-  if(metaPieces.length){
-    const meta = document.createElement('p');
-    meta.className = 'card-meta';
-    meta.textContent = metaPieces.join(' • ');
-    el.appendChild(meta);
-  }
-  const p = document.createElement('p'); p.textContent = (article.abstract || '').slice(0,100) + (article.abstract && article.abstract.length>100 ? '…' : ''); el.appendChild(p);
-  const labels = document.createElement('div'); labels.className = 'labels';
-  (article.terms || []).slice(0,3).forEach((t,i)=>{
-    const l = document.createElement('span'); l.className = 'label' + (i===0? ' label--accent':''); l.textContent = t; labels.appendChild(l);
+  const el = document.createElement('article');
+  el.className = 'card';
+
+  // Title
+  const h = document.createElement('h3');
+  h.textContent = article.title || 'Untitled';
+  el.appendChild(h);
+
+  // Short abstract (first ~110 chars)
+  const p = document.createElement('p');
+  const abs = (article.abstract || '').trim();
+  const excerpt = abs ? (abs.length > 110 ? abs.slice(0,110).trim() + '…' : abs) : '';
+  p.textContent = excerpt;
+  p.className = 'card-abstract';
+  el.appendChild(p);
+
+  // Top 3 keywords
+  const labels = document.createElement('div');
+  labels.className = 'labels';
+  const keys = Array.isArray(article.terms) ? article.terms.slice(0,3) : [];
+  keys.forEach((t,i)=>{
+    const l = document.createElement('span');
+    l.className = 'label' + (i===0? ' label--accent':'');
+    l.textContent = t;
+    labels.appendChild(l);
   });
   el.appendChild(labels);
-  // small log for debugging
-  // console.log('[cards] created card', {title: article.title, terms: article.terms});
+
+  // Year badge bottom-right
+  const year = (typeof article.year === 'number') ? String(article.year) : (article.year ? String(article.year) : '');
+  if(year){
+    const y = document.createElement('div');
+    y.className = 'card-year';
+    y.textContent = year;
+    el.appendChild(y);
+  }
+
   return el;
 }
 

@@ -57,7 +57,7 @@ panzoom.onChange = (s)=>{ updateZoomOutput(s); };
 updateZoomOutput({scale: panzoom.scale, translate: panzoom.translate});
 
 const filterState = {
-  search: '',
+  search: 'bone',
   journal: '',
   affiliation: '',
   authors: [],
@@ -68,6 +68,8 @@ const filterState = {
 let allItems = [];
 let filteredItems = [];
 let searchDebounce = null;
+const applyButton = document.getElementById('filters-apply');
+const loadingSpinner = document.getElementById('loading-spinner');
 let availableAuthors = [];
 let focusFrame = null;
 let lastFocusedElement = null;
@@ -122,7 +124,10 @@ function fitViewToLayout(layout){
 
 function renderArticles(list, {resetView = false} = {}){
   const items = Array.isArray(list) ? list : [];
-  currentRenderedItems = items.slice();
+  const MAX_RENDER = 300; // limit to avoid rendering extremely large numbers of cards
+  const total = items.length;
+  const toRender = items.slice(0, MAX_RENDER);
+  currentRenderedItems = toRender.slice();
   if(!items.length){
     closeArticleModal();
     stage.innerHTML = '';
@@ -137,6 +142,24 @@ function renderArticles(list, {resetView = false} = {}){
   }
 
   const layout = scatterCards(stage, currentRenderedItems, {});
+  // show a partial-results notice when we only rendered a subset
+  const existingNote = stage.querySelector('.partial-note');
+  if(existingNote) existingNote.remove();
+  if(total > MAX_RENDER){
+    const note = document.createElement('div');
+    note.className = 'partial-note';
+    note.textContent = `Showing ${MAX_RENDER.toLocaleString()} of ${total.toLocaleString()} results — refine filters to narrow results.`;
+    note.style.position = 'absolute';
+    note.style.right = '18px';
+    note.style.top = '18px';
+    note.style.padding = '8px 12px';
+    note.style.background = 'rgba(0,0,0,0.6)';
+    note.style.border = '1px solid rgba(255,255,255,0.06)';
+    note.style.borderRadius = '10px';
+    note.style.color = 'var(--muted)';
+    note.style.zIndex = 90;
+    stage.appendChild(note);
+  }
   if(resetView){
     fitViewToLayout(layout);
   }else{
@@ -310,7 +333,6 @@ function addAuthor(value){
   if(exists) return;
   filterState.authors.push(canonical);
   renderAuthorChips();
-  applyFilters({resetView: false});
 }
 
 function removeAuthor(value){
@@ -318,7 +340,6 @@ function removeAuthor(value){
   if(idx === -1) return;
   filterState.authors.splice(idx, 1);
   renderAuthorChips();
-  applyFilters({resetView: false});
 }
 
 function commitAuthorFromInput(){
@@ -331,32 +352,34 @@ function commitAuthorFromInput(){
 
 function bindFilterEvents(){
   if(filterForm){
+    // prevent native submit - user must click the Search button to apply filters
     filterForm.addEventListener('submit', evt => {
       evt.preventDefault();
-      applyFilters({resetView: true});
     });
   }
 
   if(searchInput){
+    // update internal state but do not auto-apply filters while typing (avoid expensive re-renders)
+    searchInput.value = filterState.search || '';
     searchInput.addEventListener('input', evt => {
       const value = evt.target.value;
       filterState.search = value || '';
+      // keep debounce value for legacy but do not auto-apply
       if(searchDebounce) window.clearTimeout(searchDebounce);
-      searchDebounce = window.setTimeout(() => applyFilters({resetView: false}), 180);
+      searchDebounce = window.setTimeout(() => {/* noop: manual apply via button */}, 250);
     });
   }
 
   if(journalSelect){
     journalSelect.addEventListener('change', evt => {
       filterState.journal = evt.target.value || '';
-      applyFilters({resetView: true});
+      // do not auto-apply; wait for Search button
     });
   }
 
   if(affiliationSelect){
     affiliationSelect.addEventListener('change', evt => {
       filterState.affiliation = evt.target.value || '';
-      applyFilters({resetView: true});
     });
   }
 
@@ -380,14 +403,12 @@ function bindFilterEvents(){
   if(yearFromInput){
     yearFromInput.addEventListener('change', evt => {
       filterState.yearFrom = parseYear(evt.target.value);
-      applyFilters({resetView: true});
     });
   }
 
   if(yearToInput){
     yearToInput.addEventListener('change', evt => {
       filterState.yearTo = parseYear(evt.target.value);
-      applyFilters({resetView: true});
     });
   }
 
@@ -411,7 +432,21 @@ function bindFilterEvents(){
       renderAuthorChips();
       closeArticleModal();
       updateResultCountDisplay(allItems.length);
-      applyFilters({resetView: true});
+      // do not auto-apply filters on clear; user must press Search
+    });
+  }
+
+  if(applyButton){
+    applyButton.addEventListener('click', async () => {
+      // show spinner
+      if(loadingSpinner) loadingSpinner.setAttribute('aria-hidden', 'false');
+      try{
+        // small debounce to allow UI to show spinner
+        await new Promise(r => setTimeout(r, 80));
+        applyFilters({resetView: true});
+      }finally{
+        if(loadingSpinner) loadingSpinner.setAttribute('aria-hidden', 'true');
+      }
     });
   }
 }
@@ -830,14 +865,18 @@ async function init(){
   const DATA_PATH = new URL('../../data/dataset.json', import.meta.url).href;
   console.log('[main] loading dataset from', DATA_PATH);
   try{
+    // show spinner during load
+    if(loadingSpinner) loadingSpinner.setAttribute('aria-hidden', 'false');
     allItems = await loadDataset(DATA_PATH);
     console.log('[main] dataset loaded, items:', allItems.length);
 
     prepareFilters(allItems);
     bindFilterEvents();
-    updateResultCountDisplay(allItems.length);
+    // initial state: do not render everything — apply the default 'bone' search
+    updateResultCountDisplay(0);
     applyFilters({resetView: true});
     console.log('[main] initial render complete, DOM children:', stage.childElementCount);
+    if(loadingSpinner) loadingSpinner.setAttribute('aria-hidden', 'true');
   }catch(err){
     console.error('[main] Failed to load dataset', err);
     const t = document.createElement('div');

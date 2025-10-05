@@ -104,16 +104,9 @@ async function initTeam(){
 }
 
 /* VIDEO: ensure fallback behaviour for plain <video> tags (not used for iframe) */
-function initVideo(){
-  const vids = document.querySelectorAll('video');
-  vids.forEach(v=>{
-    if(window.innerWidth < 600) v.setAttribute('controls','');
-  });
-}
 
 document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initHero();
   initTeam();
-  initVideo();
 });

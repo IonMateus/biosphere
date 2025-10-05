@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import requests
 from lxml import etree
 from io import BytesIO
@@ -258,7 +257,7 @@ if __name__ == "__main__":
                 continue
             pmc_id = "PMC"+m.group(1)
 
-            print(f"[{i}] Processando {pmc_id}...")  # <-- print de progresso
+            print(f"[{i}] Processando {pmc_id}...") 
 
             try:
                 article_data = process_pmc_to_json(pmc_id)

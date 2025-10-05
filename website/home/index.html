@@ -24,9 +24,8 @@
                 <a href="#about">About</a>
                 <a href="#challenge">Challenge</a>
                 <a href="#team">Team</a>
-                <a href="#video">Video</a>
-                <a href="../search" class="tool tool-link">Explore</a>
-                <a href="../insights" class="tool tool-link">Insights</a>
+                <a href="../search" class="tool tool-link search-link">Search Publications</a>
+                <a href="../insights" class="tool tool-link insights-link">Insights</a>
             </nav>
         </div>
     </header>
@@ -38,30 +37,45 @@
                     <h1>BioSphere<br><small>NASA Space Apps Challenge 2025</small></h1>
                     <p class="lead">Explore NASA bioscience publications and quickly find relevant information about space experiments.</p>
                     <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
-                        <a class="btn hero-btn" href="../search">Explore dataset</a>
+                        <a class="btn hero-btn" href="../search">Search Publications</a>
                         <a class="btn hero-btn secondary" href="../insights">Insights</a>
                     </div>
                 </div>
                 <div class="hero-right">
-                    <img src="https://picsum.photos/1000" alt="decorative planet" class="hero-image"/>
+                    <div class="hero-image-wrap">
+                        <img src="../assets/searchImage.png" alt="search illustration" class="hero-image"/>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section id="about" class="about container">
             <h2>About</h2>
-            <p>BioSphere is a platform developed for the NASA Space Apps Challenge 2025 that makes it easier to explore NASA bioscience publications. It helps users quickly find relevant information about space experiments, visualize results, and connect papers to datasets and media.</p>
+            <p>Our project is an interactive web platform designed to enhance the exploration of biological research articles published by NASA. It tackles the challenge of navigating and connecting a large volume of scientific papers by transforming them into a dynamic visual network. Instead of long, static lists, researchers interact with a 2D canvas of interconnected articles, where each card represents a publication and each line shows conceptual similarity. This makes the exploration of complex scientific topics more intuitive, visual, and engaging.</p>
+
+            <h3>Data and Methodology</h3>
+            <p>The data foundation was built from a curated dataset of 607 biology-related articles, extracted in Python from XML sources. For each article, the code collected metadata such as titles, abstracts, authors, keywords, citations, and publication years, also calculating the most frequent and representative terms within the text. The result was a rich dataset with nearly 400,000 lines, later used to fuel the platform’s two main pages: Search and Insights.</p>
+
+            <h3>Search and Insights</h3>
+            <p>The Search page allows users to filter and visualize articles by keywords, authors, or publication periods, while the Insights page provides analytical views such as topic evolution, citation trends, and leading authors across time. Together, these features enable scientists to form a clear picture of the main research directions and relationships within their field.</p>
+
+            <h3>Technical explanation of the correlation between cards</h3>
+            <p>The connections between article cards are built in the <code>buildSimilarityGraph</code> function (file <code>cards.js</code>), through a multilayered affinity system:</p>
+            <ul>
+                <li><strong>Token similarity (65%)</strong> – Jaccard similarity of sets built from title, terms, and abstract openings.</li>
+                <li><strong>Keyword overlap (≤35%)</strong> – Shared normalized key terms increase connection strength.</li>
+                <li><strong>Author overlap (≤25%)</strong> – Matching surnames strengthen ties between related works.</li>
+                <li><strong>Journal bonus (+0.12)</strong> – Articles from the same journal gain a constant affinity boost.</li>
+                <li><strong>Temporal proximity (≤1)</strong> – Close publication years increase the connection score.</li>
+            </ul>
+            <p>A dynamic threshold (around the 45th percentile) ensures adaptive sensitivity to dataset density, avoiding both excess and isolation of nodes. The resulting network produces thematic clusters that combine textual, authorial, and temporal coherence — enabling a structured yet organic map of scientific relations.</p>
+
+            <h3>Impact and differentiation</h3>
+            <p>The project’s main innovation lies in its visual and cognitive redefinition of how scientific knowledge can be explored. Traditional platforms present articles in long, linear lists — an approach that limits perception of relationships and broader patterns. Our system, on the other hand, spreads articles spatially across a 2D network, linking them visually according to similarity.</p>
+            <p>By integrating structured data, visual exploration, and analytical insights, the project significantly strengthens the process of identifying relevant, high-impact sources, making it a powerful tool for any researcher working with extensive academic literature.</p>
         </section>
 
-        <section id="challenge" class="challenge container">
-            <h2>The Challenge</h2>
-            <p>The NASA Space Apps Challenge asks teams to build tools that surface insights from space data. BioSphere focuses on bioscience literature, enabling efficient discovery and browsing of publications and related resources.</p>
-            <ul>
-                <li>Search and filter bioscience publications</li>
-                <li>Highlight experiments and key findings</li>
-                <li>Link to datasets, images and full-text where available</li>
-            </ul>
-        </section>
+
 
             <section id="team" class="team container">
                 <h2>Team</h2>

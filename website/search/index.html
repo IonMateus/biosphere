@@ -52,6 +52,7 @@
         </div>
         <div class="filter-actions">
           <button type="button" id="filters-clear" class="ghost">Clear</button>
+          <button type="button" id="filters-apply" class="btn btn--primary">Search</button>
         </div>
       </form>
     </header>
@@ -59,6 +60,9 @@
     <main class="viewport">
       <canvas id="grid-canvas" class="grid-canvas"></canvas>
       <div id="stage" class="stage" aria-live="polite"></div>
+      <div id="loading-spinner" class="loading-spinner" aria-hidden="true" role="status" aria-live="polite">
+        <div class="spinner-circle"></div>
+      </div>
     </main>
 
     <footer class="app-footer">Use mouse drag to pan, mouse wheel to zoom. Showing cards from dataset.</footer>
