@@ -49,6 +49,10 @@ Instead of browsing long static lists, users interact with a **2D canvas of inte
 
 This visual structure makes exploring complex scientific topics **intuitive, engaging, and insightful**.
 
+Another useful aspect of the plataform is the ability to copy a pre-formated citation for each article with a button. Thos save researchs time and effort when referencing sources in scientific reports, papers or articles. Instead of manually formating citations, users can quickly retrive them already formatted, making the writing process more efficient and helping ensure accuracy in academic researches.
+
+In this project, it's also possible to navigate between analytical views about the publications, such as topic evolution, citation trends, and main institutions in research.
+
 ---
 
 ## 🧠 Technical Details
@@ -63,6 +67,7 @@ The resulting dataset (≈400,000 lines) powers the two main sections:
 ### 🔍 Search Page
 - Filter and visualize articles by **keywords**, **authors**, or **publication period**.  
 - Dynamically highlight connected publications.
+- Copy pre-formatted citations with one click to streamline scientific referencing.
 
 ### 📊 Insights Page
 - Analytical views: **topic evolution**, **citation trends**, and **leading authors**.  
