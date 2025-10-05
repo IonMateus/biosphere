@@ -83,7 +83,7 @@
     }
 
     h2 {
-      color: #00a8ff;
+      color: #22c55e;
       margin-bottom: 20px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -218,6 +218,19 @@
 
   <div id="tooltip" class="tooltip"></div>
 
+  <section id="fluxo-temas">
+    <h2>Fluxo de Tópicos ao Longo do Tempo</h2>
+    <svg id="streamGraph" width="800" height="500"></svg>
+    <p>
+      O gráfico mostra as proporções do números de artigos publicados por ano, 
+      em relação aos temas das publicações.
+    </p>
+    <p>
+      Ao clicar em uma das áreas coloridas, é possível verificar qual a média de números
+      de artigos publicados por ano, de acordo com determinado tema.
+    </p>
+  </section>
+
   <script>
     const ctx = document.getElementById('chartPublicacoes');
     const publicacoesData = {
@@ -225,7 +238,7 @@
       datasets: [{
         label: 'Publicações Totais',
         data: [420, 480, 550, 620, 710, 810, 950, 1020, 1100],
-        borderColor: '#00a8ff',
+        borderColor: '#22c55e',
         tension: 0.3
       }]
     };
@@ -254,7 +267,7 @@
       chart.data.datasets[1] = {
         label: `Tópico: ${topic}`,
         data: topicFreq[topic],
-        borderColor: '#e1b12c',
+        borderColor: '#22c55e',
         borderDash: [5,5],
         tension: 0.3
       };
@@ -262,7 +275,7 @@
     });
 
 
-    // dados fictícios para testar o mapa
+    // mapa que relaciona os autores
     const data = {
       nodes: [
         { id: "Maria Fernandes", group: "Microgravidade", papers: ["Biological Responses to Microgravity", "Cosmic Dust Dynamics"] },
@@ -392,6 +405,136 @@
 
     // Ocultar tooltip ao clicar fora
     svg.on("click", () => tooltip.style("display", "none"));
+
+
+    // fluxograma dos temas em função do tempo
+    const streamData = [
+      { ano: "2016", Propulsão: 10, Microgravidade: 20, Materiais: 15, "Radiação Cósmica": 12 },
+      { ano: "2017", Propulsão: 12, Microgravidade: 22, Materiais: 18, "Radiação Cósmica": 14 },
+      { ano: "2018", Propulsão: 14, Microgravidade: 28, Materiais: 20, "Radiação Cósmica": 17 },
+      { ano: "2019", Propulsão: 18, Microgravidade: 30, Materiais: 22, "Radiação Cósmica": 20 },
+      { ano: "2020", Propulsão: 21, Microgravidade: 35, Materiais: 26, "Radiação Cósmica": 23 },
+      { ano: "2021", Propulsão: 24, Microgravidade: 38, Materiais: 29, "Radiação Cósmica": 26 },
+      { ano: "2022", Propulsão: 28, Microgravidade: 41, Materiais: 32, "Radiação Cósmica": 29 },
+      { ano: "2023", Propulsão: 30, Microgravidade: 45, Materiais: 35, "Radiação Cósmica": 31 },
+      { ano: "2024", Propulsão: 32, Microgravidade: 48, Materiais: 38, "Radiação Cósmica": 33 }
+    ];
+
+    const keys = ["Propulsão", "Microgravidade", "Materiais", "Radiação Cósmica"];
+
+    const svgStream = d3.select("#streamGraph"),
+          widthStream = +svgStream.attr("width"),
+          heightStream = +svgStream.attr("height"),
+          margin = { top: 20, right: 30, bottom: 30, left: 50 };
+
+    const x = d3.scalePoint()
+      .domain(streamData.map(d => d.ano))
+      .range([margin.left, widthStream - margin.right]);
+
+    const y = d3.scaleLinear()
+      .range([heightStream - margin.bottom, margin.top]);
+
+    const colorStream = d3.scaleOrdinal()
+      .domain(keys)
+      .range(d3.schemeCategory10);
+
+    const stack = d3.stack()
+      .keys(keys)
+      .offset(d3.stackOffsetNone);
+
+    const area = d3.area()
+      .x(d => x(d.data.ano))
+      .y0(d => y(d[0]))
+      .y1(d => y(d[1]));
+
+    const layers = stack(streamData);
+
+    // Atualiza o domínio vertical com base nos valores empilhados
+    y.domain([
+      d3.min(layers, layer => d3.min(layer, d => d[0])),
+      d3.max(layers, layer => d3.max(layer, d => d[1]))
+    ]);
+
+    svgStream.selectAll("path")
+      .data(layers)
+      .join("path")
+      .attr("d", area)
+      .attr("fill", ({key}) => colorStream(key))
+      .append("title")
+      .text(d => d.key);
+
+    // tooltip que aparece ao clicar no gráfico
+    const tooltip2 = d3.select("body").append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("background", "rgba(0,0,0,0.85)")
+      .style("color", "#fff")
+      .style("padding", "10px")
+      .style("border-radius", "6px")
+      .style("font-size", "14px")
+      .style("pointer-events", "none")
+      .style("display", "none");
+
+    // Áreas
+    svgStream.selectAll("path")
+      .data(layers)
+      .join("path")
+      .attr("d", area)
+      .attr("fill", ({key}) => colorStream(key))
+      .style("cursor", "pointer")
+      .on("click", (event, d) => {
+        const key = d.key;
+        const media = d3.mean(streamData, row => row[key]);
+
+        tooltip
+          .html(`<strong>${key}</strong><br>Média: ${media.toFixed(1)} artigos por ano`)
+          .style("left", (event.pageX + 15) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("display", "block");
+        
+        event.stopPropagation();
+      });
+
+    // Esconde tooltip ao clicar fora
+    d3.select("body").on("click", (event) => {
+      if (!event.target.closest("path")) {
+        tooltip.style("display", "none");
+      }
+    });
+
+    // Eixo X
+    svgStream.append("g")
+      .attr("transform", `translate(0, ${heightStream - margin.bottom})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .style("fill", "#fff");
+
+    // Título do eixo X
+    svgStream.append("text")
+      .attr("x", widthStream / 2)
+      .attr("y", heightStream)
+      .attr("text-anchor", "middle")
+      .style("fill", "#fff")
+      .style("font-size", "14px")
+      .text("Ano de Publicação");
+
+    // Eixo Y
+    svgStream.append("g")
+      .attr("transform", `translate(${margin.left}, 0)`)
+      .call(d3.axisLeft(y).ticks(5))
+      .selectAll("text")
+      .style("fill", "#fff");
+
+    // Título do eixo Y
+    svgStream.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -heightStream / 2)
+      .attr("y", 15)
+      .attr("text-anchor", "middle")
+      .style("fill", "#fff")
+      .style("font-size", "14px")
+      .text("Número de Artigos");
+
 
   </script>
 </body>
