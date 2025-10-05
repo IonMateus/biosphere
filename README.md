@@ -126,6 +126,16 @@ All conceptual, functional, and structural decisions were made entirely by the *
 
 ---
 
+## 📚 Resource Utilized
+
+This project was built using the following curated list of **608 open-access Space Biology publications**:  
+[SB Publications Dataset](https://github.com/jgalazka/SB_publications/tree/main)  
+
+> Note: The dataset provides only links to the publications.  
+> All metadata extraction, including titles, abstracts, authors, keywords, citations, and publication years, was performed by the BioSphere team to create the dataset used for network visualization and analytical insights.
+
+---
+
 <p align="center">
   <img src="https://github.com/user-attachments/assets/4e4b5924-196e-4def-879b-a26a24bfe8e2" width="300" alt="NASA Space Apps Challenge logo">
 </p>
